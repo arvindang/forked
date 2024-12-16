@@ -9,71 +9,98 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load all documents or initialize if empty
   let documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || {};
 
-  // Get the current document ID dynamically from the data attribute
-  const editorElement = document.getElementById("markdown-editor");
-  const documentId = editorElement.getAttribute("data-document-id");
+  // Helper to get the current document ID dynamically
+  function getCurrentDocumentId() {
+    return document.querySelector(".editor-container.active")?.dataset.documentId || "origin";
+  }
 
-  // If the current document doesn't exist in localStorage, initialize it
-  if (!documents[documentId]) {
-    documents[documentId] = {
-      id: documentId,
-      title: documentId === "origin" ? "Origin Document" : `Fork of ${documentId}`,
+  // If the origin document doesn't exist in LocalStorage, initialize it
+  if (!documents["origin"]) {
+    documents["origin"] = {
+      id: "origin",
+      title: "Origin Document",
       content: "",
-      parentId: documentId === "origin" ? null : "origin", // Origin has no parent
+      parentId: null, // Origin has no parent
     };
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
   }
 
-  // Initialize the EasyMDE editor
-  const easyMDE = new EasyMDE({
-    element: editorElement,
-    autofocus: true,
-    spellChecker: false,
-    placeholder: `Write your markdown here...`,
-  });
-
   /**
-   * Load document content into the EasyMDE editor.
+   * Load document content into the editor.
    */
-  function loadDocumentContent() {
+  function loadDocumentContent(documentId, editor) {
     const savedContent = documents[documentId]?.content || "";
-    easyMDE.value(savedContent); // Set content in EasyMDE
+    editor.value(savedContent); // Set content in EasyMDE
     console.log(`Loaded content for document: ${documentId}`);
   }
 
   /**
-   * Save the current document content back to localStorage.
+   * Save the current document content back to LocalStorage.
    */
-  function saveDocumentContent() {
-    documents[documentId].content = easyMDE.value(); // Update content
+  function saveDocumentContent(documentId, editor) {
+    documents[documentId].content = editor.value(); // Update content
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents)); // Save all documents
     console.log(`Saved content for document: ${documentId}`);
   }
 
-  // Load the document content on initialization
-  loadDocumentContent();
+  /**
+   * Add a new editor dynamically to the page.
+   */
+  function addEditor(documentId) {
+    // Create a new editor container
+    const container = document.createElement("div");
+    container.classList.add("editor-container", "active");
+    container.dataset.documentId = documentId;
 
-  // Save content to localStorage whenever the user makes changes
-  easyMDE.codemirror.on("change", saveDocumentContent);
+    // Create a unique ID for the editor element
+    const editorId = `editor-${documentId}`;
+    container.innerHTML = `
+      <h5>${documents[documentId].title}</h5>
+      <textarea id="${editorId}"></textarea>
+    `;
 
-  // Save content one last time when the user is leaving the page
-  window.addEventListener("beforeunload", saveDocumentContent);
+    // Append the editor container to the page
+    document.getElementById("editors").appendChild(container);
+
+    // Initialize EasyMDE for the new editor
+    const easyMDE = new EasyMDE({
+      element: document.getElementById(editorId),
+      autofocus: true,
+      spellChecker: false,
+      placeholder: `Write your markdown here...`,
+    });
+
+    // Load and save content for the new document
+    loadDocumentContent(documentId, easyMDE);
+    easyMDE.codemirror.on("change", () => saveDocumentContent(documentId, easyMDE));
+  }
 
   /**
    * Fork the current document.
-   * Generates a new fork with the same content and a new ID.
    */
   document.getElementById("fork-btn")?.addEventListener("click", () => {
-    const forkId = generateUUID();
+    const currentDocumentId = getCurrentDocumentId(); // Get the ID of the current document being edited
+    const forkId = generateUUID(); // Generate a unique ID for the fork
+
+    // Create a new forked document
     documents[forkId] = {
       id: forkId,
-      title: `Fork of ${documents[documentId].title}`,
-      content: documents[documentId].content,
-      parentId: documentId,
+      title: `Fork of ${documents[currentDocumentId].title}`,
+      content: documents[currentDocumentId].content, // Copy content from the original document
+      parentId: currentDocumentId, // Link the fork to its parent document
     };
 
+    // Save to LocalStorage
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+
+    // Add a new editor dynamically for the fork
+    addEditor(forkId);
+
+    // Notify user
     alert(`Document forked! New fork ID: ${forkId}`);
     console.log(`Fork created: ${forkId}`);
   });
+
+  // Load the origin document initially
+  addEditor("origin");
 });

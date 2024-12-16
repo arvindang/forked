@@ -31,20 +31,25 @@
             <h5 class="mb-3">Origin</h5>
             <div class="row mb-2">
               <div class="col">
-                  <select class="form-select w-auto d-inline-block">
-                      <option>Origin</option>
-                      <option>Other Branch</option>
+                  <select class="form-select w-auto d-inline-block" id="origin-select">
+                      <option value="origin">Origin</option>
                   </select>
-                  <button id="fork-btn" class="btn btn-outline-secondary mx-1">Fork</button>
+                  <button class="fork-btn btn btn-outline-secondary mx-1" data-document-id="origin">Fork</button>
                   <button class="btn btn-outline-secondary mx-1">Export</button>
                   <button class="btn btn-outline-secondary mx-1">Version History</button>
               </div>
             </div>
+            <div style="height: 80vh; overflow-y: auto;">
+              <textarea id="origin-editor" data-document-id="origin"></textarea>
+            </div>
         </div>
 
-        <!-- Dynamic Editors -->
-        <div id="editors" class="col-lg-6">
-          <!-- Editors will be dynamically injected here -->
+        <!-- Right Column -->
+        <div class="col-lg-6">
+          <h5 class="mb-3" id="fork-title" style="display: none;">Forked Document</h5>
+          <div id="editors">
+            <!-- Dynamically injected editors will appear here -->
+          </div>
         </div>
     </div>
   </div>

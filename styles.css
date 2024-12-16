@@ -28,4 +28,8 @@ body {
   #branchDocument .paragraph-container:hover {
     background: #ffe8a1;
   }
+
+  /* .CodeMirror {
+    height: 100% !important;
+  } */
   

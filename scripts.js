@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let documents = loadDocuments();
   initializeOriginEditor();
+  displayMostRecentFork();
+
   document.body.addEventListener("click", handleButtonClick);
 
   function loadDocuments() {
@@ -25,6 +27,14 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     saveToLocalStorage(initialDocs);
     return initialDocs;
+  }
+
+  function displayMostRecentFork() {
+    const forkIds = Object.keys(documents).filter(key => key !== "origin");
+    if (forkIds.length > 0) {
+      const mostRecentForkId = forkIds[forkIds.length - 1]; // Assuming latest added key
+      addForkedEditor(mostRecentForkId);
+    }
   }
 
   function saveToLocalStorage(data = documents) {
@@ -66,9 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
       parentId: documentId,
     };
     saveToLocalStorage();
-    console.log("Forked document saved:", documents[forkId]);
-    
     addForkedEditor(forkId);
+
+    console.log("Documents before saving:", documents);
+    console.log(typeof documents, documents);
+    console.log("DOCUMENTS_KEY:", DOCUMENTS_KEY);
   }
 
   function addForkedEditor(forkId) {
@@ -104,3 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+  // console.log("Documents before saving:", documents);
+  // console.log(typeof documents, documents);
+  // console.log("DOCUMENTS_KEY:", DOCUMENTS_KEY);

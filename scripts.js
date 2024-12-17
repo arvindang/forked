@@ -1,49 +1,78 @@
 document.addEventListener("DOMContentLoaded", () => {
   const DOCUMENTS_KEY = "documents"; // LocalStorage key
-  const originEditorElement = document.getElementById("origin-editor");
-  const forkContainer = document.getElementById("editors");
-  const forkTitle = document.getElementById("fork-title");
+  const forkContainer = document.getElementById("editors"); // Right column container
+  const forkTitle = document.getElementById("fork-title"); // Header for forked editors
+  const originEditorElement = document.getElementById("origin-editor"); // Origin editor textarea
 
-  // Load all documents or initialize with default "origin" content
-  let documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || {
-    origin: {
-      id: "origin",
-      title: "Origin Document",
-      content: "**# The Harmony of Nature**\n\nWrite your document here...",
-      parentId: null,
-    }
-  };
+  let documents = loadDocuments();
+  initializeOriginEditor();
+  document.body.addEventListener("click", handleButtonClick);
 
-  // Initialize Origin Editor
-  const originEditor = new EasyMDE({
-    element: originEditorElement,
-    autofocus: true,
-    spellChecker: false,
-  });
-  originEditor.value(documents["origin"].content);
-
-  // Save changes to localStorage when the user edits the origin document
-  originEditor.codemirror.on("change", () => {
-    documents["origin"].content = originEditor.value();
-    saveToLocalStorage();
-  });
-
-  // Function to save all documents to LocalStorage
-  function saveToLocalStorage() {
-    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+  function loadDocuments() {
+    return JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || initializeDocuments();
   }
 
-  // Generate a unique ID for forks
+  function initializeDocuments() {
+    const originId = generateUUID();
+    const initialDocs = {
+      [originId]: {
+        id: originId,
+        title: "Origin Document",
+        content: "Write in Markdown here...",
+        parentId: null,
+      },
+      origin: { id: originId },
+    };
+    saveToLocalStorage(initialDocs);
+    return initialDocs;
+  }
+
+  function saveToLocalStorage(data = documents) {
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(data));
+  }
+
   function generateUUID() {
-    return `fork-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  // Add a forked editor dynamically to the right column
-  function addForkedEditor(forkId) {
-    forkTitle.style.display = "block"; // Show fork title
-    forkContainer.innerHTML = ""; // Clear previous forks for now
+  function initializeOriginEditor() {
+    const originId = documents.origin.id;
+    const originEditor = new EasyMDE({
+      element: originEditorElement,
+      autofocus: true,
+      spellChecker: false,
+    });
+    originEditor.value(documents[originId].content);
 
-    // Create controls and editor dynamically
+    originEditor.codemirror.on("change", () => {
+      documents[originId].content = originEditor.value();
+      saveToLocalStorage();
+    });
+  }
+
+  function handleButtonClick(e) {
+    if (e.target.classList.contains("fork-btn")) {
+      const documentId = e.target.getAttribute("data-document-id");
+      handleFork(documentId);
+    }
+  }
+
+  function handleFork(documentId) {
+    const forkId = generateUUID();
+    documents[forkId] = {
+      id: forkId,
+      title: `Fork of ${documents[documentId].title}`,
+      content: documents[documentId].content,
+      parentId: documentId,
+    };
+    saveToLocalStorage();
+    addForkedEditor(forkId);
+  }
+
+  function addForkedEditor(forkId) {
+    forkTitle.style.display = "block";
+    forkContainer.innerHTML = "";
+
     const forkEditorContainer = document.createElement("div");
     forkEditorContainer.innerHTML = `
       <div class="row mb-2">
@@ -56,13 +85,12 @@ document.addEventListener("DOMContentLoaded", () => {
               <button class="btn btn-outline-secondary mx-1">Version History</button>
           </div>
       </div>
-      <textarea id="editor-${forkId}"></textarea>
+      <textarea id="editor-${forkId}" data-document-id="${forkId}"></textarea>
     `;
     forkContainer.appendChild(forkEditorContainer);
 
-    const forkEditorElement = document.getElementById(`editor-${forkId}`);
     const forkEditor = new EasyMDE({
-      element: forkEditorElement,
+      element: document.getElementById(`editor-${forkId}`),
       autofocus: true,
       spellChecker: false,
     });
@@ -72,31 +100,5 @@ document.addEventListener("DOMContentLoaded", () => {
       documents[forkId].content = forkEditor.value();
       saveToLocalStorage();
     });
-  }
-
-  // Event delegation for all fork buttons
-  document.addEventListener("click", (e) => {
-    if (e.target.classList.contains("fork-btn")) {
-      const documentId = e.target.getAttribute("data-document-id");
-      handleFork(documentId);
-    }
-  });
-
-  // Handle Fork Button Click
-  function handleFork(documentId) {
-    const forkId = generateUUID();
-
-    // Create a new fork with the same content as the specified document
-    documents[forkId] = {
-      id: forkId,
-      title: `Fork of ${documents[documentId].title}`,
-      content: documents[documentId].content,
-      parentId: documentId,
-    };
-    saveToLocalStorage();
-
-    // Load the forked document into the right column
-    addForkedEditor(forkId);
-    alert(`Document forked! New Fork ID: ${forkId}`);
   }
 });

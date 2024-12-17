@@ -66,6 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
       parentId: documentId,
     };
     saveToLocalStorage();
+    console.log("Forked document saved:", documents[forkId]);
+    
     addForkedEditor(forkId);
   }
 

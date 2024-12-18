@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const forkSelect = document.getElementById("fork-select"); // Right column dropdown
 
   let documents = loadDocuments();
+  let originEditor;
   initializeOriginEditor();
   displayMostRecentFork();
   populateForkSelector();
@@ -52,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function initializeOriginEditor() {
     const originId = documents.origin.id;
-    const originEditor = new EasyMDE({
+    originEditor = new EasyMDE({
       element: originEditorElement,
       autofocus: true,
       spellChecker: false,
@@ -70,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const originId = documents.origin.id;
 
     // Clear current options
-    originSelect.innerHTML = '<option value="">Select a Document</option>';
+    originSelect.innerHTML = '<option value="">Select a Fork</option>';
     forkSelect.innerHTML = '<option value="">Select a Fork</option>';
 
     // Add origin document to both dropdowns
@@ -126,9 +127,6 @@ document.addEventListener("DOMContentLoaded", () => {
     forkEditorContainer.innerHTML = `
       <div class="row mb-2">
           <div class="col">
-              <select class="form-select w-auto d-inline-block">
-                  <option>${documents[forkId].title}</option>
-              </select>
               <button class="fork-btn btn btn-outline-secondary mx-1" data-document-id="${forkId}">Fork</button>
               <button class="btn btn-outline-secondary mx-1">Export</button>
               <button class="btn btn-outline-secondary mx-1">Version History</button>
@@ -164,16 +162,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleOriginSelection(e) {
     const selectedId = e.target.value;
-    const originId = documents.origin.id;
     
     if (selectedId) {
       // Update the origin editor with the selected document's content
-      const originEditor = new EasyMDE({
-        element: originEditorElement,
-        autofocus: true,
-        spellChecker: false,
-      });
       originEditor.value(documents[selectedId].content);
+
+      // Update the change event listener for the new document
+      originEditor.codemirror.off("change"); // Remove old listener
+      originEditor.codemirror.on("change", () => {
+        documents[selectedId].content = originEditor.value();
+        saveToLocalStorage();
+      });
 
       // Update the origin reference
       documents.origin.id = selectedId;

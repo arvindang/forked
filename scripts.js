@@ -3,12 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const forkContainer = document.getElementById("editors"); // Right column container
   const forkTitle = document.getElementById("fork-title"); // Header for forked editors
   const originEditorElement = document.getElementById("origin-editor"); // Origin editor textarea
+  const originSelect = document.getElementById("origin-select"); // Left column dropdown
+  const forkSelect = document.getElementById("fork-select"); // Right column dropdown
 
   let documents = loadDocuments();
   initializeOriginEditor();
   displayMostRecentFork();
+  populateForkSelector();
 
   document.body.addEventListener("click", handleButtonClick);
+  forkSelect.addEventListener("change", handleForkSelection);
+  originSelect.addEventListener("change", handleOriginSelection);
 
   function loadDocuments() {
     return JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || initializeDocuments();
@@ -60,6 +65,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function populateForkSelector() {
+    const forkIds = Object.keys(documents).filter(key => key !== "origin");
+    const originId = documents.origin.id;
+
+    // Clear current options
+    originSelect.innerHTML = '<option value="">Select a Document</option>';
+    forkSelect.innerHTML = '<option value="">Select a Fork</option>';
+
+    // Add origin document to both dropdowns
+    const originOption = document.createElement("option");
+    originOption.value = originId;
+    originOption.textContent = documents[originId].title;
+    originSelect.appendChild(originOption);
+
+    // Populate both dropdowns with forks
+    forkIds.forEach(forkId => {
+      const option = document.createElement("option");
+      option.value = forkId;
+      option.textContent = documents[forkId].title;
+
+      originSelect.appendChild(option.cloneNode(true));
+      forkSelect.appendChild(option);
+    });
+  }
+
   function handleButtonClick(e) {
     if (e.target.classList.contains("fork-btn")) {
       const documentId = e.target.getAttribute("data-document-id");
@@ -77,15 +107,20 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     saveToLocalStorage();
     addForkedEditor(forkId);
+    populateForkSelector();
 
     console.log("Documents before saving:", documents);
     console.log(typeof documents, documents);
     console.log("DOCUMENTS_KEY:", DOCUMENTS_KEY);
+
+    console.log("Origin Select:", document.getElementById("origin-select"));
+    console.log("Fork Select:", document.getElementById("fork-select"));
+
   }
 
   function addForkedEditor(forkId) {
     forkTitle.style.display = "block";
-    forkContainer.innerHTML = "";
+    forkContainer.innerHTML = "";    
 
     const forkEditorContainer = document.createElement("div");
     forkEditorContainer.innerHTML = `
@@ -115,9 +150,34 @@ document.addEventListener("DOMContentLoaded", () => {
       saveToLocalStorage();
     });
   }
+
+  function handleForkSelection(e) {
+    const selectedForkId = e.target.value;
+    if (selectedForkId) {
+      addForkedEditor(selectedForkId);
+    } else {
+      // Clear the fork container if no fork is selected
+      forkContainer.innerHTML = "";
+      forkTitle.style.display = "none";
+    }
+  }
+
+  function handleOriginSelection(e) {
+    const selectedId = e.target.value;
+    const originId = documents.origin.id;
+    
+    if (selectedId) {
+      // Update the origin editor with the selected document's content
+      const originEditor = new EasyMDE({
+        element: originEditorElement,
+        autofocus: true,
+        spellChecker: false,
+      });
+      originEditor.value(documents[selectedId].content);
+
+      // Update the origin reference
+      documents.origin.id = selectedId;
+      saveToLocalStorage();
+    }
+  }
 });
-
-
-  // console.log("Documents before saving:", documents);
-  // console.log(typeof documents, documents);
-  // console.log("DOCUMENTS_KEY:", DOCUMENTS_KEY);

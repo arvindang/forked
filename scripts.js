@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const forkSelect = document.getElementById("fork-select"); // Right column dropdown
 
   let documents = loadDocuments();
-  let originEditor;
   initializeOriginEditor();
   displayMostRecentFork();
   populateForkSelector();
@@ -77,14 +76,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add origin document to both dropdowns
     const originOption = document.createElement("option");
     originOption.value = originId;
-    originOption.textContent = documents[originId].title;
+    originOption.textContent = `${documents[originId].title} (${originId})`;
     originSelect.appendChild(originOption);
 
     // Populate both dropdowns with forks
     forkIds.forEach(forkId => {
       const option = document.createElement("option");
       option.value = forkId;
-      option.textContent = documents[forkId].title;
+      option.textContent = `${documents[forkId].title} (${forkId})`;
 
       originSelect.appendChild(option.cloneNode(true));
       forkSelect.appendChild(option);
@@ -107,16 +106,11 @@ document.addEventListener("DOMContentLoaded", () => {
       parentId: documentId,
     };
     saveToLocalStorage();
-    addForkedEditor(forkId);
     populateForkSelector();
-
-    console.log("Documents before saving:", documents);
-    console.log(typeof documents, documents);
-    console.log("DOCUMENTS_KEY:", DOCUMENTS_KEY);
-
-    console.log("Origin Select:", document.getElementById("origin-select"));
-    console.log("Fork Select:", document.getElementById("fork-select"));
-
+    addForkedEditor(forkId);
+    
+    // Set the origin dropdown to show the document being forked
+    originSelect.value = documentId;
   }
 
   function addForkedEditor(forkId) {
@@ -161,21 +155,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleOriginSelection(e) {
-    const selectedId = e.target.value;
-    
-    if (selectedId) {
+    const selectedDocumentId = e.target.value;
+    if (selectedDocumentId) {
       // Update the origin editor with the selected document's content
-      originEditor.value(documents[selectedId].content);
-
-      // Update the change event listener for the new document
-      originEditor.codemirror.off("change"); // Remove old listener
-      originEditor.codemirror.on("change", () => {
-        documents[selectedId].content = originEditor.value();
-        saveToLocalStorage();
-      });
-
-      // Update the origin reference
-      documents.origin.id = selectedId;
+      originEditor.value(documents[selectedDocumentId].content);
+      documents.origin.id = selectedDocumentId;
       saveToLocalStorage();
     }
   }

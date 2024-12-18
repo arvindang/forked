@@ -122,8 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="row mb-2">
           <div class="col">
               <button class="fork-btn btn btn-outline-secondary mx-1" data-document-id="${forkId}">Fork</button>
-              <button class="btn btn-outline-secondary mx-1">Export</button>
-              <button class="btn btn-outline-secondary mx-1">Version History</button>
           </div>
       </div>
       <textarea id="editor-${forkId}" data-document-id="${forkId}"></textarea>

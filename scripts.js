@@ -16,7 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
   originSelect.addEventListener("change", handleOriginSelection);
 
   function loadDocuments() {
-    return JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || initializeDocuments();
+    // return JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || initializeDocuments();
+
+    let loadedDocs = JSON.parse(localStorage.getItem(DOCUMENTS_KEY));
+    if (!loadedDocs || !loadedDocs.origin || !loadedDocs.origin.id) {
+        loadedDocs = initializeDocuments();
+    }
+    return loadedDocs;
   }
 
   function initializeDocuments() {
@@ -98,19 +104,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleFork(documentId) {
+    // Get the actual document ID if "origin" is passed
+    const actualDocumentId = documentId === "origin" ? documents.origin.id : documentId;
+    
     const forkId = generateUUID();
     documents[forkId] = {
-      id: forkId,
-      title: `Fork of ${documents[documentId].title}`,
-      content: documents[documentId].content,
-      parentId: documentId,
+        id: forkId,
+        title: `Fork of ${documents[actualDocumentId].title}`,
+        content: documents[actualDocumentId].content,
+        parentId: actualDocumentId,  // Use the actual document ID
     };
     saveToLocalStorage();
     populateForkSelector();
     addForkedEditor(forkId);
     
     // Set the origin dropdown to show the document being forked
-    originSelect.value = documentId;
+    originSelect.value = actualDocumentId;
   }
 
   function addForkedEditor(forkId) {

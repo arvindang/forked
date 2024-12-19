@@ -119,11 +119,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const forkEditorContainer = document.createElement("div");
     forkEditorContainer.innerHTML = `
-      <div class="row mb-2">
-          <div class="col">
-              <button class="fork-btn btn btn-outline-secondary mx-1" data-document-id="${forkId}">Fork</button>
-          </div>
-      </div>
       <textarea id="editor-${forkId}" data-document-id="${forkId}"></textarea>
     `;
     forkContainer.appendChild(forkEditorContainer);
@@ -144,11 +139,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleForkSelection(e) {
     const selectedForkId = e.target.value;
     if (selectedForkId) {
-      addForkedEditor(selectedForkId);
+        addForkedEditor(selectedForkId);
     } else {
-      // Clear the fork container if no fork is selected
-      forkContainer.innerHTML = "";
-      forkTitle.style.display = "none";
+        // Clear both the fork container and fork button when no fork is selected
+        forkContainer.innerHTML = "";
+        document.getElementById('fork-button-container').innerHTML = "";
+        forkTitle.style.display = "none";
     }
   }
 

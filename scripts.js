@@ -66,11 +66,21 @@ document.addEventListener("DOMContentLoaded", () => {
       autofocus: true,
       spellChecker: false,
     });
+    
+    // Set initial value without triggering change event
+    const originalChangeHandler = originEditor.codemirror.getOption('onChange');
+    originEditor.codemirror.setOption('onChange', null);
     originEditor.value(documents[originId].content);
+    originEditor.codemirror.setOption('onChange', originalChangeHandler);
 
+    // Add change handler for future changes
     originEditor.codemirror.on("change", () => {
-      documents[originId].content = originEditor.value();
-      saveToLocalStorage();
+        // Save changes only to the currently selected document
+        const currentDocId = originSelect.value;
+        if (currentDocId) {
+            documents[currentDocId].content = originEditor.value();
+            saveToLocalStorage();
+        }
     });
   }
 

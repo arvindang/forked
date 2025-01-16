@@ -230,34 +230,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // Switch to single column
       leftColumn.classList.remove('col-lg-6', 'border-end');
       leftColumn.classList.add('col-lg-12');
-      rightColumn.style.display = 'none';
-      
-      // Move fork selector to left column
-      const leftColControls = leftColumn.querySelector('.col');
-      if (leftColControls && forkSelect) {
-        leftColControls.appendChild(forkSelect);
-        
-        // Update fork selector label
-        const forkLabel = document.createElement('span');
-        forkLabel.classList.add('me-2');
-        forkLabel.textContent = 'Fork: ';
-        leftColControls.insertBefore(forkLabel, forkSelect);
-      }
+      rightColumn.style.display = 'none';  // Hide entire right column
     } else {
       // Switch back to two columns
       leftColumn.classList.remove('col-lg-12');
       leftColumn.classList.add('col-lg-6', 'border-end');
-      rightColumn.style.display = 'block';
-      
-      // Move fork selector back to right column
-      const rightColControls = rightColumn.querySelector('.col');
-      if (rightColControls && forkSelect) {
-        rightColControls.insertBefore(forkSelect, rightColControls.firstChild);
-        
-        // Remove the fork label if it exists
-        const forkLabel = leftColumn.querySelector('.me-2');
-        if (forkLabel) forkLabel.remove();
-      }
+      rightColumn.style.display = 'block';  // Show entire right column
     }
     
     // Trigger resize event to make editors adjust their size

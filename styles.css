@@ -44,3 +44,12 @@ body {
     height: calc(100vh - 150px);
   }
   
+  .col-lg-6,
+  .col-lg-12 {
+    transition: all 0.3s ease-in-out;
+  }
+
+  #fork-select {
+    transition: all 0.3s ease-in-out;
+  }
+  

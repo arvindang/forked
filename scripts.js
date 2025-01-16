@@ -5,6 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const originEditorElement = document.getElementById("origin-editor"); // Origin editor textarea
   const originSelect = document.getElementById("origin-select"); // Left column dropdown
   const forkSelect = document.getElementById("fork-select"); // Right column dropdown
+  const singleColumnBtn = document.getElementById("single-column");
+  const twoColumnsBtn = document.getElementById("two-columns");
+  let isSingleColumn = false;
 
   let documents = loadDocuments();
   populateForkSelector();
@@ -17,6 +20,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.body.addEventListener("click", handleButtonClick);
   forkSelect.addEventListener("change", handleForkSelection);
   originSelect.addEventListener("change", handleOriginSelection);
+  singleColumnBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    setColumnLayout(true);
+  });
+  twoColumnsBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    setColumnLayout(false);
+  });
 
   function loadDocuments() {
     // return JSON.parse(localStorage.getItem(DOCUMENTS_KEY)) || initializeDocuments();
@@ -199,13 +210,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function saveToLocalStorage(data = documents) {
-    // Validate data integrity before saving
-    Object.keys(data).forEach(key => {
-        if (key !== "origin" && !data[key].content) {
-            console.warn(`Missing content for document ID: ${key}`);
-        }
-    });
-    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(data));
+  function setColumnLayout(showSingleColumn) {
+    isSingleColumn = showSingleColumn;
+    
+    // More specific selectors to ensure we find the columns
+    const leftColumn = document.querySelector('.container-fluid .row > .col-lg-6:first-child, .container-fluid .row > .col-lg-12');
+    const rightColumn = document.querySelector('.container-fluid .row > .col-lg-6:last-child');
+    
+    if (!leftColumn || !rightColumn) {
+        console.error('Could not find column elements');
+        return;
+    }
+    
+    // Toggle visibility of the buttons
+    singleColumnBtn.style.display = isSingleColumn ? 'none' : 'block';
+    twoColumnsBtn.style.display = isSingleColumn ? 'block' : 'none';
+    
+    if (isSingleColumn) {
+      // Switch to single column
+      leftColumn.classList.remove('col-lg-6', 'border-end');
+      leftColumn.classList.add('col-lg-12');
+      rightColumn.style.display = 'none';
+      
+      // Move fork selector to left column
+      const leftColControls = leftColumn.querySelector('.col');
+      if (leftColControls && forkSelect) {
+        leftColControls.appendChild(forkSelect);
+        
+        // Update fork selector label
+        const forkLabel = document.createElement('span');
+        forkLabel.classList.add('me-2');
+        forkLabel.textContent = 'Fork: ';
+        leftColControls.insertBefore(forkLabel, forkSelect);
+      }
+    } else {
+      // Switch back to two columns
+      leftColumn.classList.remove('col-lg-12');
+      leftColumn.classList.add('col-lg-6', 'border-end');
+      rightColumn.style.display = 'block';
+      
+      // Move fork selector back to right column
+      const rightColControls = rightColumn.querySelector('.col');
+      if (rightColControls && forkSelect) {
+        rightColControls.insertBefore(forkSelect, rightColControls.firstChild);
+        
+        // Remove the fork label if it exists
+        const forkLabel = leftColumn.querySelector('.me-2');
+        if (forkLabel) forkLabel.remove();
+      }
+    }
+    
+    // Trigger resize event to make editors adjust their size
+    window.dispatchEvent(new Event('resize'));
   }
 });

@@ -7,9 +7,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const forkSelect = document.getElementById("fork-select"); // Right column dropdown
 
   let documents = loadDocuments();
+  populateForkSelector();
   initializeOriginEditor();
   displayMostRecentFork();
-  populateForkSelector();
+
+  // Update originSelect to show current origin
+  originSelect.value = documents.origin.id;
 
   document.body.addEventListener("click", handleButtonClick);
   forkSelect.addEventListener("change", handleForkSelection);
@@ -132,14 +135,24 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     forkContainer.appendChild(forkEditorContainer);
 
+    // Set the fork selector to match the current fork
+    forkSelect.value = forkId;
+
+    // Create a new editor instance for this fork
     const forkEditor = new EasyMDE({
       element: document.getElementById(`editor-${forkId}`),
       autofocus: true,
       spellChecker: false,
     });
+    
+    // Create a deep copy of the content for this fork
+    if (!documents[forkId].content) {
+        documents[forkId].content = documents[documents[forkId].parentId].content;
+    }
     forkEditor.value(documents[forkId].content);
 
     forkEditor.codemirror.on("change", () => {
+      // Update only this fork's content
       documents[forkId].content = forkEditor.value();
       saveToLocalStorage();
     });
@@ -160,10 +173,22 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleOriginSelection(e) {
     const selectedDocumentId = e.target.value;
     if (selectedDocumentId) {
-      // Update the origin editor with the selected document's content
-      originEditor.value(documents[selectedDocumentId].content);
-      documents.origin.id = selectedDocumentId;
-      saveToLocalStorage();
+        // Update only the origin editor with the selected document's content
+        originEditor.value(documents[selectedDocumentId].content);
+
+        // Simply change the active origin reference
+        documents.origin.id = selectedDocumentId;
+        saveToLocalStorage();
     }
+  }
+
+  function saveToLocalStorage(data = documents) {
+    // Validate data integrity before saving
+    Object.keys(data).forEach(key => {
+        if (key !== "origin" && !data[key].content) {
+            console.warn(`Missing content for document ID: ${key}`);
+        }
+    });
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(data));
   }
 });

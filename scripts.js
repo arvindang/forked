@@ -175,6 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedForkId = e.target.value;
     if (selectedForkId) {
         addForkedEditor(selectedForkId);
+        // Update fork title
+        document.getElementById('fork-title').textContent = documents[selectedForkId].title;
     } else {
         // Clear both the fork container and fork button when no fork is selected
         forkContainer.innerHTML = "";
@@ -188,6 +190,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedDocumentId) {
         // Update only the origin editor with the selected document's content
         originEditor.value(documents[selectedDocumentId].content);
+        // Update origin title
+        document.getElementById('origin-title').textContent = documents[selectedDocumentId].title;
 
         // Simply change the active origin reference
         documents.origin.id = selectedDocumentId;

@@ -31,7 +31,7 @@ body {
 
   /* Editor container styles */
   .CodeMirror {
-    height: calc(100vh - 150px) !important; /* Adjust for navbar and controls */
+    height: calc(100vh - 250px) !important; /* Adjust for navbar and controls */
   }
 
   .CodeMirror-scroll {

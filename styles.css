@@ -29,7 +29,18 @@ body {
     background: #ffe8a1;
   }
 
-  /* .CodeMirror {
-    height: 100% !important;
-  } */
+  /* Editor container styles */
+  .CodeMirror {
+    height: calc(100vh - 150px) !important; /* Adjust for navbar and controls */
+  }
+
+  .CodeMirror-scroll {
+    min-height: calc(100vh - 150px);
+  }
+
+  /* Ensure editor containers take full height */
+  #editors, 
+  #origin-editor {
+    height: calc(100vh - 150px);
+  }
   

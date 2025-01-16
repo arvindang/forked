@@ -104,7 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
       option.value = forkId;
       option.textContent = `${documents[forkId].title} (${forkId})`;
 
-      originSelect.appendChild(option.cloneNode(true));
+      // Only add to originSelect if it's not the origin document
+      if (forkId !== originId) {
+        originSelect.appendChild(option.cloneNode(true));
+      }
       forkSelect.appendChild(option);
     });
   }

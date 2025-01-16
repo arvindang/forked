@@ -15,8 +15,7 @@
   <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">Document Title</a>
-      <div class="d-flex">
-          <a class="nav-link mx-2" href="#">Branch Overview</a>
+      <div class="d-flex">          
           <a class="nav-link mx-2" href="#" id="single-column">Single Column</a>
           <a class="nav-link mx-2" href="#" id="two-columns" style="display: none;">Two Columns</a>
           <!-- <a class="nav-link mx-2" href="#">Show Diff</a> -->
@@ -32,12 +31,7 @@
             <h5 class="mb-3" id="origin-title">Origin</h5>
             <div class="row mb-2">
               <div class="col">
-                <select class="form-select w-auto d-inline-block" id="origin-select">
-                  <option value="">Select a Document</option>
-                </select>
-                <button class="fork-btn btn btn-outline-secondary mx-1" data-document-id="origin">Fork</button>
-                <!-- <button class="btn btn-outline-secondary mx-1">Export</button> -->
-                <!-- <button class="btn btn-outline-secondary mx-1">Version History</button> -->
+                <!-- The controls will be injected dynamically -->
               </div>
             </div>
             <div style="overflow-y: auto;">
@@ -50,12 +44,7 @@
           <h5 class="mb-3" id="fork-title" style="display: none;">Forked Document</h5>
           <div class="row mb-2">
             <div class="col">
-              <select class="form-select w-auto d-inline-block" id="fork-select">
-                <option value="">Select a Fork</option>
-              </select>
-              <span id="fork-button-container">
-                <button class="fork-btn btn btn-outline-secondary mx-1" data-document-id="origin">Fork</button>
-              </span>
+              <!-- The controls will be injected dynamically -->
             </div>
           </div>
           <div id="editors">

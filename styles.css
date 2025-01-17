@@ -113,11 +113,26 @@ body {
   .tree-item-id {
     color: #6c757d;
     font-size: 0.8em;
+    margin-left: 0.5rem;
   }
 
   .editor-controls {
     margin-bottom: 1rem;
     display: flex;
     gap: 0.5rem;
+  }
+
+  .debug-info {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  .debug-info pre {
+    margin: 0.5rem 0 0 0;
+    white-space: pre-wrap;
+    word-break: break-all;
   }
   

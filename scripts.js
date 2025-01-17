@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const controls = document.createElement("div");
     controls.className = "editor-controls";
     controls.innerHTML = `
-        <button class="btn btn-outline-secondary select-fork-btn" data-editor="${editorType}">
+        <button class="btn btn-outline-secondary select-fork-btn" data-editor="${editorType}" data-current-doc-id="${documentId}">
             Select Different Fork
         </button>
         <button class="fork-btn btn btn-outline-secondary" data-document-id="${documentId}">
@@ -293,7 +293,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     controls.querySelector(".select-fork-btn").addEventListener("click", (e) => {
       const editor = e.target.getAttribute("data-editor");
-      const panel = createForkSelectorPanel(documentId, (selectedId) => {
+      const currentDocId = e.target.getAttribute("data-current-doc-id");
+      const panel = createForkSelectorPanel(currentDocId, (selectedId) => {
         if (editor === "origin") {
           documents.origin.id = selectedId;
           saveToLocalStorage();

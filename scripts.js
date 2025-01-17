@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let documents = loadDocuments();
   initializeOriginEditor();
+  forkTitle.style.display = "none";
   displayMostRecentFork();
 
   document.body.addEventListener("click", handleButtonClick);
@@ -45,10 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function displayMostRecentFork() {
-    const forkIds = Object.keys(documents).filter((key) => key !== "origin");
-    if (forkIds.length > 0) {
+    const forkIds = Object.keys(documents).filter(key => key !== "origin");
+    if (forkIds.length > 0 && documents[forkIds[0]].parentId) {
       const mostRecentForkId = forkIds[forkIds.length - 1];
       addForkedEditor(mostRecentForkId);
+      setColumnLayout(false);
+    } else {
+      setColumnLayout(true);
     }
   }
 

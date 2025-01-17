@@ -104,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
       parentId: actualDocumentId,
     };
     saveToLocalStorage();
+    setColumnLayout(false);
     addForkedEditor(forkId);
   }
 

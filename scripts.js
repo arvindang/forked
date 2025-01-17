@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    const controls = updateEditorControls(originEditorElement.parentElement, documents.origin.id);
+    const controls = updateEditorControls(originEditorElement.parentElement, documents.origin.id, "origin");
     originEditorElement.parentElement.insertBefore(controls, originEditorElement);
   }
 
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <textarea id="editor-${forkId}" data-document-id="${forkId}"></textarea>
     `;
 
-    const controls = updateEditorControls(forkEditorContainer, forkId);
+    const controls = updateEditorControls(forkEditorContainer, forkId, "fork");
     forkEditorContainer.insertBefore(controls, forkEditorContainer.firstChild);
 
     forkContainer.appendChild(forkEditorContainer);
@@ -279,11 +279,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return container;
   }
 
-  function updateEditorControls(editorContainer, documentId) {
+  function updateEditorControls(editorContainer, documentId, editorType) {
     const controls = document.createElement("div");
     controls.className = "editor-controls";
     controls.innerHTML = `
-        <button class="btn btn-outline-secondary select-fork-btn">
+        <button class="btn btn-outline-secondary select-fork-btn" data-editor="${editorType}">
             Select Different Fork
         </button>
         <button class="fork-btn btn btn-outline-secondary" data-document-id="${documentId}">
@@ -292,8 +292,9 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
     controls.querySelector(".select-fork-btn").addEventListener("click", (e) => {
+      const editor = e.target.getAttribute("data-editor");
       const panel = createForkSelectorPanel(documentId, (selectedId) => {
-        if (documentId === documents.origin.id || documentId === "origin") {
+        if (editor === "origin") {
           documents.origin.id = selectedId;
           saveToLocalStorage();
           originEditor.value(documents[selectedId].content);

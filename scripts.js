@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadDocuments() {
     let loadedDocs = JSON.parse(localStorage.getItem(DOCUMENTS_KEY));
+    console.log("Loaded documents:", loadedDocs);
     if (!loadedDocs || !loadedDocs.origin || !loadedDocs.origin.id) {
       loadedDocs = initializeDocuments();
     }
@@ -47,11 +48,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function displayMostRecentFork() {
     const forkIds = Object.keys(documents).filter(key => key !== "origin");
-    if (forkIds.length > 0 && documents[forkIds[0]].parentId) {
+    console.log("Found fork IDs:", forkIds);
+    
+    if (forkIds.length > 0) {
       const mostRecentForkId = forkIds[forkIds.length - 1];
-      addForkedEditor(mostRecentForkId);
+      console.log("Displaying most recent fork:", mostRecentForkId);
+      
       setColumnLayout(false);
+      addForkedEditor(mostRecentForkId);
     } else {
+      console.log("No forks found, setting single column");
       setColumnLayout(true);
     }
   }
@@ -137,31 +143,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setColumnLayout(showSingleColumn) {
+    console.log("Setting column layout, single column:", showSingleColumn);
     isSingleColumn = showSingleColumn;
 
-    const leftColumn = document.querySelector(
-      ".container-fluid .row > .col-lg-6:first-child, .container-fluid .row > .col-lg-12"
-    );
-    const rightColumn = document.querySelector(
-      ".container-fluid .row > .col-lg-6:last-child"
-    );
+    const leftColumn = document.querySelector(".container-fluid > .row > div:first-child");
+    const rightColumn = document.querySelector(".container-fluid > .row > div:last-child");
+    const forkIds = Object.keys(documents).filter(key => key !== "origin");
+    const mostRecentForkId = forkIds.length > 0 ? forkIds[forkIds.length - 1] : null;
 
     if (!leftColumn || !rightColumn) {
       console.error("Could not find column elements");
       return;
     }
 
-    singleColumnBtn.style.display = isSingleColumn ? "none" : "block";
-    twoColumnsBtn.style.display = isSingleColumn ? "block" : "none";
+    // Update button visibility
+    singleColumnBtn.style.display = showSingleColumn ? "none" : "block";
+    twoColumnsBtn.style.display = showSingleColumn ? "block" : "none";
 
-    if (isSingleColumn) {
+    if (showSingleColumn) {
       leftColumn.classList.remove("col-lg-6", "border-end");
       leftColumn.classList.add("col-lg-12");
       rightColumn.style.display = "none";
+      forkTitle.style.display = "none";
     } else {
       leftColumn.classList.remove("col-lg-12");
       leftColumn.classList.add("col-lg-6", "border-end");
       rightColumn.style.display = "block";
+      forkTitle.style.display = "block";
+      
+      if (mostRecentForkId) {
+        const existingEditor = document.querySelector(`#editor-${mostRecentForkId}`);
+        if (!existingEditor) {
+          addForkedEditor(mostRecentForkId);
+        }
+      }
     }
 
     window.dispatchEvent(new Event("resize"));

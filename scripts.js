@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Found fork IDs:", forkIds);
     
     if (forkIds.length > 0) {
+      if (forkIds.length == 1 && documents[forkIds[0]].parentId == null) return;
       const mostRecentForkId = forkIds[forkIds.length - 1];
       console.log("Displaying most recent fork:", mostRecentForkId);
       

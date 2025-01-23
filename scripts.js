@@ -1,34 +1,38 @@
 document.addEventListener("DOMContentLoaded", () => {
   const DOCUMENTS_KEY = "documents";
-  let documents = loadDocuments();
-
-  // Editors
-  let originEditor;
-  let forkEditor; // We'll keep track of the most recent fork's editor here
-
-  // HTML elements
-  const forkContainer = document.getElementById("editors");
-  const forkTitle = document.getElementById("fork-title");
-  const originEditorElement = document.getElementById("origin-editor");
-  const singleColumnBtn = document.getElementById("single-column");
-  const twoColumnsBtn = document.getElementById("two-columns");
-  const diffToggleBtn = document.getElementById("toggle-diff");
   const editorContainer = document.getElementById("editor-container");
   const diffViewContainer = document.getElementById("diff-view");
 
-  const leftColumn = document.getElementById("origin-column");
-  const rightColumn = document.getElementById("fork-column");
+  // For column layout
+  const originColumn = document.getElementById("origin-column");
+  const forkColumn = document.getElementById("fork-column");
+  const forkContainer = document.getElementById("editors");
+  const forkTitle = document.getElementById("fork-title");
 
-  // Track which editor is "active" based on focus
-  let lastFocusedEditor = "origin"; // default
+  // Nav Buttons
+  const singleColumnBtn = document.getElementById("single-column");
+  const twoColumnsBtn = document.getElementById("two-columns");
+  const diffToggleBtn = document.getElementById("toggle-diff");
 
+  // Global State
+  let documents = loadDocuments();
   let isSingleColumn = false;
   let isDiffMode = false;
+  let lastFocusedEditor = "origin"; // tracks which side is active
 
-  initializeOriginEditor();
+  // Editor references
+  let originEditor = null; // The EasyMDE instance for the origin side
+  let forkEditor = null;   // The EasyMDE instance for the fork side
+
+  // We also track which doc IDs are currently loaded in each editor
+  let currentOriginDocId = documents.origin.id; 
+  let currentForkDocId = null; // set once we create a fork
+
+  // Init
+  initOriginEditor(currentOriginDocId);
   displayMostRecentFork();
 
-  // Hook up nav button events
+  // Listen for nav events
   singleColumnBtn.addEventListener("click", (e) => {
     e.preventDefault();
     setColumnLayout(true);
@@ -42,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleDiffView();
   });
 
-  // Listen for "fork" button clicks
+  // Listen for any "Fork" button
   document.body.addEventListener("click", (e) => {
     if (e.target.classList.contains("fork-btn")) {
       const documentId = e.target.getAttribute("data-document-id");
@@ -52,20 +56,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * -------------------------
-   *      Load Documents
+   *       Load / Save
    * -------------------------
    */
   function loadDocuments() {
-    let loadedDocs = JSON.parse(localStorage.getItem(DOCUMENTS_KEY));
-    if (!loadedDocs || !loadedDocs.origin || !loadedDocs.origin.id) {
-      loadedDocs = initializeDocuments();
+    let data = JSON.parse(localStorage.getItem(DOCUMENTS_KEY));
+    if (!data || !data.origin || !data.origin.id) {
+      data = initializeDocuments();
     }
-    return loadedDocs;
+    return data;
   }
 
   function initializeDocuments() {
     const originId = generateUUID();
-    const initialDocs = {
+    const initial = {
       origin: { id: originId },
       [originId]: {
         id: originId,
@@ -74,8 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
         parentId: null,
       },
     };
-    saveToLocalStorage(initialDocs);
-    return initialDocs;
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(initial));
+    return initial;
   }
 
   function saveToLocalStorage(data = documents) {
@@ -88,93 +92,97 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * -------------------------
-   *  Initialize Origin Editor
+   *   Origin Editor Setup
    * -------------------------
    */
-  function initializeOriginEditor() {
-    const originId = documents.origin.id;
+  function initOriginEditor(docId) {
+    // If there's an existing editor, destroy it first
+    if (originEditor) {
+      originEditor.toTextArea();
+      originEditor = null;
+    }
+
+    const originTextArea = document.getElementById("origin-editor");
     originEditor = new EasyMDE({
-      element: originEditorElement,
+      element: originTextArea,
       autofocus: true,
       spellChecker: false,
     });
 
-    // Load content
-    originEditor.value(documents[originId].content);
+    // Load the doc content
+    if (documents[docId]) {
+      originEditor.value(documents[docId].content || "");
+    }
 
-    // Save changes
+    // Listen for changes
     originEditor.codemirror.on("change", () => {
-      documents[originId].content = originEditor.value();
+      documents[docId].content = originEditor.value();
       saveToLocalStorage();
     });
 
-    // Track focus for "active editor"
+    // Track focus
     originEditor.codemirror.on("focus", () => {
       lastFocusedEditor = "origin";
     });
 
-    // Insert controls above text area
+    // Insert editor controls
     const controls = updateEditorControls(
-      originEditorElement.parentElement,
-      documents.origin.id,
+      originTextArea.parentElement,
+      docId,
       "origin"
     );
-    originEditorElement.parentElement.insertBefore(controls, originEditorElement);
+    // Make sure we place them above the text area
+    const existingControls = originTextArea.parentElement.querySelector(".editor-controls");
+    if (existingControls) existingControls.remove();
+    originTextArea.parentElement.insertBefore(controls, originTextArea);
   }
 
   /**
    * -------------------------
-   *     Display Fork Editor
+   *   Fork Editor Setup
    * -------------------------
    */
-  function displayMostRecentFork() {
-    const forkIds = getAllForkIds();
-    if (forkIds.length > 0) {
-      // If there's at least one real fork
-      if (forkIds.length === 1 && documents[forkIds[0]].parentId == null) return;
-      const mostRecentForkId = forkIds[forkIds.length - 1];
-      setColumnLayout(false);
-      addForkedEditor(mostRecentForkId);
-    } else {
-      // No forks found
-      setColumnLayout(true);
+  function initForkEditor(docId) {
+    // Destroy any existing fork editor
+    if (forkEditor) {
+      forkEditor.toTextArea();
+      forkEditor = null;
     }
-  }
 
-  function getAllForkIds() {
-    return Object.keys(documents).filter((key) => key !== "origin");
-  }
-
-  function addForkedEditor(forkId) {
-    forkTitle.style.display = "block";
+    // Clear out the forkContainer first
     forkContainer.innerHTML = "";
 
-    // Editor container
+    // Make a fresh <textarea>
     const forkEditorContainer = document.createElement("div");
     forkEditorContainer.innerHTML = `
-      <textarea id="editor-${forkId}" data-document-id="${forkId}"></textarea>
+      <textarea id="editor-${docId}" data-document-id="${docId}"></textarea>
     `;
-
-    const controls = updateEditorControls(forkEditorContainer, forkId, "fork");
-    forkEditorContainer.insertBefore(controls, forkEditorContainer.firstChild);
     forkContainer.appendChild(forkEditorContainer);
 
-    // Create the EasyMDE editor
+    // Insert controls
+    const textArea = forkEditorContainer.querySelector("textarea");
+    const controls = updateEditorControls(forkEditorContainer, docId, "fork");
+    forkEditorContainer.insertBefore(controls, textArea);
+
+    // Create new EasyMDE
     forkEditor = new EasyMDE({
-      element: document.getElementById(`editor-${forkId}`),
-      autofocus: true,
+      element: textArea,
+      autofocus: false,
       spellChecker: false,
     });
 
-    forkEditor.value(documents[forkId].content);
+    // Load content
+    if (documents[docId]) {
+      forkEditor.value(documents[docId].content || "");
+    }
 
-    // Listen for changes to save
+    // Listen for changes
     forkEditor.codemirror.on("change", () => {
-      documents[forkId].content = forkEditor.value();
+      documents[docId].content = forkEditor.value();
       saveToLocalStorage();
     });
 
-    // Track focus (active editor)
+    // Track focus
     forkEditor.codemirror.on("focus", () => {
       lastFocusedEditor = "fork";
     });
@@ -182,26 +190,118 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * -------------------------
-   *       Fork Handling
+   *    Display Fork Editor
+   * -------------------------
+   */
+  function displayMostRecentFork() {
+    const forkIds = getAllForkIds();
+    if (!forkIds.length) {
+      // No forks => single column
+      setColumnLayout(true);
+      return;
+    }
+
+    // If there's exactly 1 fork whose parent is null, might be special
+    if (forkIds.length === 1 && documents[forkIds[0]].parentId == null) {
+      return;
+    }
+
+    // Otherwise, show two columns
+    setColumnLayout(false);
+
+    // Show the most recently created fork
+    const mostRecentForkId = forkIds[forkIds.length - 1];
+    currentForkDocId = mostRecentForkId;
+    forkTitle.style.display = "block";
+    initForkEditor(mostRecentForkId);
+  }
+
+  function getAllForkIds() {
+    return Object.keys(documents).filter((key) => key !== "origin");
+  }
+
+  /**
+   * -------------------------
+   *       Handle Fork
    * -------------------------
    */
   function handleFork(documentId) {
-    // Actual doc ID
-    const actualDocumentId =
-      documentId === "origin" ? documents.origin.id : documentId;
+    // The actual doc we are forking
+    const actualDocId = documentId === "origin"
+      ? currentOriginDocId
+      : documentId;
 
-    const forkId = generateUUID();
-    documents[forkId] = {
-      id: forkId,
-      title: `Fork of ${documents[actualDocumentId].title || "Untitled"}`,
-      content: documents[actualDocumentId].content,
-      parentId: actualDocumentId,
+    const newForkId = generateUUID();
+    documents[newForkId] = {
+      id: newForkId,
+      title: `Fork of ${documents[actualDocId].title || "Untitled"}`,
+      content: documents[actualDocId].content,
+      parentId: actualDocId,
     };
     saveToLocalStorage();
 
-    // Show two columns and add the new fork editor
+    // Show two columns
     setColumnLayout(false);
-    addForkedEditor(forkId);
+    currentForkDocId = newForkId;
+    forkTitle.style.display = "block";
+    initForkEditor(newForkId);
+  }
+
+  /**
+   * -------------------------
+   *  Editor Controls (Select)
+   * -------------------------
+   */
+  function updateEditorControls(editorParent, docId, editorType) {
+    const controls = document.createElement("div");
+    controls.className = "editor-controls";
+    controls.innerHTML = `
+      <button 
+        class="btn btn-outline-secondary select-fork-btn" 
+        data-editor="${editorType}" 
+        data-current-doc-id="${docId}"
+      >
+        Select Different Fork
+      </button>
+      <button 
+        class="fork-btn btn btn-outline-secondary" 
+        data-document-id="${docId}"
+      >
+        Fork
+      </button>
+    `;
+
+    // Clicking "Select Different Fork"
+    controls.querySelector(".select-fork-btn").addEventListener("click", (e) => {
+      const editor = e.target.getAttribute("data-editor");
+      const currentDocId = e.target.getAttribute("data-current-doc-id");
+
+      const panel = createForkSelectorPanel(currentDocId, (selectedId) => {
+        panel.remove();
+        
+        // If user selected a new doc for "origin"
+        if (editor === "origin") {
+          // 1) Save the old doc’s content
+          //    (Actually, it’s already saved on every keystroke, but we can be safe.)
+          documents[currentOriginDocId].content = originEditor.value();
+
+          // 2) Switch the origin pointer & re‐init
+          currentOriginDocId = selectedId;
+          documents.origin.id = selectedId;
+          initOriginEditor(selectedId);
+
+        } else {
+          // "fork" side
+          documents[currentForkDocId].content = forkEditor ? forkEditor.value() : "";
+          currentForkDocId = selectedId;
+          initForkEditor(selectedId);
+        }
+      });
+
+      document.body.appendChild(panel);
+    });
+
+    return controls;
   }
 
   /**
@@ -212,36 +312,35 @@ document.addEventListener("DOMContentLoaded", () => {
   function setColumnLayout(showSingleColumn) {
     isSingleColumn = showSingleColumn;
 
-    // Toggle column classes
     if (showSingleColumn) {
-      leftColumn.classList.remove("col-lg-6", "border-end");
-      leftColumn.classList.add("col-lg-12");
-      rightColumn.style.display = "none";
+      originColumn.classList.remove("col-lg-6", "border-end");
+      originColumn.classList.add("col-lg-12");
+      forkColumn.style.display = "none";
       forkTitle.style.display = "none";
       singleColumnBtn.style.display = "none";
       twoColumnsBtn.style.display = "block";
     } else {
-      leftColumn.classList.remove("col-lg-12");
-      leftColumn.classList.add("col-lg-6", "border-end");
-      rightColumn.style.display = "block";
+      originColumn.classList.remove("col-lg-12");
+      originColumn.classList.add("col-lg-6", "border-end");
+      forkColumn.style.display = "block";
       forkTitle.style.display = "block";
       singleColumnBtn.style.display = "block";
       twoColumnsBtn.style.display = "none";
 
-      // If we already have a fork doc, make sure we show it
+      // If we have at least one fork doc, show the most recent
       const forkIds = getAllForkIds();
       if (forkIds.length > 0) {
-        const mostRecentForkId = forkIds[forkIds.length - 1];
-        const existingEditor = document.querySelector(`#editor-${mostRecentForkId}`);
-        if (!existingEditor) {
-          addForkedEditor(mostRecentForkId);
+        if (!currentForkDocId) {
+          currentForkDocId = forkIds[forkIds.length - 1];
         }
+        // Make sure there's an active fork editor
+        initForkEditor(currentForkDocId);
       }
     }
-    // Force a re-layout
+
     window.dispatchEvent(new Event("resize"));
 
-    // If we toggle columns while in diff mode, ensure we re-render the diff as needed
+    // If we are in diff mode, re‐render the diff
     if (isDiffMode) {
       showDiff();
     }
@@ -249,7 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * -------------------------
-   *  Diff View Toggle / Show
+   *   Diff View (Toggle)
    * -------------------------
    */
   function toggleDiffView() {
@@ -264,78 +363,65 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showDiff() {
-    // Hide editors, show diff container
     editorContainer.style.display = "none";
     diffViewContainer.style.display = "block";
 
-    // Determine active vs. inactive doc content
-    let originId = documents.origin.id;
-    let forkIds = getAllForkIds();
-    let forkId = forkIds.length > 0 ? forkIds[forkIds.length - 1] : null;
-
-    // If we only have one column or no fork, we fallback to just origin vs origin (no changes, obviously)
-    if (isSingleColumn || !forkId) {
-      const text = documents[originId].content || "";
+    // If there's no fork, or single column, just compare origin doc to itself
+    const forkIds = getAllForkIds();
+    if (isSingleColumn || !forkIds.length) {
+      const text = documents[currentOriginDocId].content || "";
       renderDiff(text, text, "Origin", "Origin");
       return;
     }
 
-    // Decide which is the "new" content (active) vs "old" content (inactive)
-    let newContent = "";
-    let oldContent = "";
-    let newTitle = "";
-    let oldTitle = "";
+    // Decide which doc is "old" vs "new" based on lastFocusedEditor
+    // (If origin is last focused -> origin is "new", fork is "old", else reversed)
+    let oldContent, newContent;
+    let oldTitle, newTitle;
 
     if (lastFocusedEditor === "origin") {
-      newContent = documents[originId].content || "";
-      oldContent = documents[forkId].content || "";
-      newTitle = documents[originId].title || "Origin";
-      oldTitle = documents[forkId].title || "Forked";
+      newContent = documents[currentOriginDocId]?.content || "";
+      oldContent = documents[currentForkDocId]?.content || "";
+      newTitle = documents[currentOriginDocId]?.title || "Origin";
+      oldTitle = documents[currentForkDocId]?.title || "Fork";
     } else {
-      newContent = documents[forkId].content || "";
-      oldContent = documents[originId].content || "";
-      newTitle = documents[forkId].title || "Forked";
-      oldTitle = documents[originId].title || "Origin";
+      newContent = documents[currentForkDocId]?.content || "";
+      oldContent = documents[currentOriginDocId]?.content || "";
+      newTitle = documents[currentForkDocId]?.title || "Fork";
+      oldTitle = documents[currentOriginDocId]?.title || "Origin";
     }
 
     renderDiff(oldContent, newContent, oldTitle, newTitle);
   }
 
   function hideDiff() {
-    // Show editors, hide diff container
     editorContainer.style.display = "block";
     diffViewContainer.style.display = "none";
   }
 
   function renderDiff(oldStr, newStr, oldName, newName) {
-    // Generate a unified diff text string
-    // If you want word-level diff, can do:
-    //   let diff = Diff.createPatch( ... ) is typically for file patch
-    // We'll use createTwoFilesPatch for clarity
     const diffString = Diff.createTwoFilesPatch(
       oldName,
       newName,
       oldStr,
       newStr,
-      "", // old header
-      "", // new header
-      { context: 3 } // optional config
+      "",
+      "",
+      { context: 3 }
     );
 
-    // Use Diff2Html to turn this into nice side-by-side HTML
     const diffHtml = Diff2Html.html(diffString, {
       drawFileList: false,
       matching: "words",
       outputFormat: "side-by-side",
     });
 
-    // Inject into the diff container
     diffViewContainer.innerHTML = diffHtml;
   }
 
   /**
    * -------------------------
-   *    Fork Selector Panel
+   *  Fork Selector Panel
    * -------------------------
    */
   function createForkSelectorPanel(currentDocId, onSelect) {
@@ -376,11 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Build map
     Object.entries(documents).forEach(([id, doc]) => {
       if (id === "origin") return;
-      docMap.set(id, {
-        ...doc,
-        children: [],
-        title: doc.title || `Document ${id}`,
-      });
+      docMap.set(id, { ...doc, children: [], title: doc.title || `Document ${id}` });
     });
 
     // Link children
@@ -396,7 +478,6 @@ document.addEventListener("DOMContentLoaded", () => {
         tree.children.push(doc);
       }
     });
-
     return tree;
   }
 
@@ -430,6 +511,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (node.children && node.children.length > 0) {
       const childrenContainer = document.createElement("div");
       childrenContainer.className = "tree-children";
+
+      // Sort children by title
       node.children.sort((a, b) =>
         (a.title || "").localeCompare(b.title || "")
       );
@@ -455,48 +538,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     return container;
-  }
-
-  /**
-   * -------------------------
-   *   Editor Controls
-   * -------------------------
-   */
-  function updateEditorControls(editorContainer, documentId, editorType) {
-    const controls = document.createElement("div");
-    controls.className = "editor-controls";
-    controls.innerHTML = `
-      <button 
-        class="btn btn-outline-secondary select-fork-btn" 
-        data-editor="${editorType}" 
-        data-current-doc-id="${documentId}"
-      >
-        Select Different Fork
-      </button>
-      <button 
-        class="fork-btn btn btn-outline-secondary" 
-        data-document-id="${documentId}"
-      >
-        Fork
-      </button>
-    `;
-
-    controls.querySelector(".select-fork-btn").addEventListener("click", (e) => {
-      const editor = e.target.getAttribute("data-editor");
-      const currentDocId = e.target.getAttribute("data-current-doc-id");
-      const panel = createForkSelectorPanel(currentDocId, (selectedId) => {
-        if (editor === "origin") {
-          documents.origin.id = selectedId;
-          saveToLocalStorage();
-          originEditor.value(documents[selectedId].content);
-        } else {
-          addForkedEditor(selectedId);
-        }
-        panel.remove();
-      });
-      document.body.appendChild(panel);
-    });
-
-    return controls;
   }
 });

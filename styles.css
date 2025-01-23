@@ -1,162 +1,166 @@
 body {
-    font-family: sans-serif;
-  }
-  
-  #mainDocCol, #branchDocCol {
-    border: 1px solid #ddd;
-    padding: 1rem;
-    border-radius: 5px;
-    background: #f9f9f9;
-  }
-  
-  .paragraph-container {
-    margin-bottom: 1.5rem;
-    position: relative;
-  }
-  
-  .paragraph-container.changed {
-    background: #fff3cd; /* Light yellow highlight for changes */
-    border-left: 4px solid #ffc107;
-    padding-left: 1rem;
-  }
-  
-  .change-btn {
-    margin-top: 0.5rem;
-  }
-  
-  /* Highlight on hover for branch paragraphs */
-  #branchDocument .paragraph-container:hover {
-    background: #ffe8a1;
-  }
+  font-family: sans-serif;
+}
 
-  /* Editor container styles */
-  .CodeMirror {
-    height: calc(100vh - 250px) !important; /* Adjust for navbar and controls */
-  }
+#mainDocCol, #branchDocCol {
+  border: 1px solid #ddd;
+  padding: 1rem;
+  border-radius: 5px;
+  background: #f9f9f9;
+}
 
-  .CodeMirror-scroll {
-    min-height: calc(100vh - 150px);
-  }
+.paragraph-container {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
 
-  /* Ensure editor containers take full height */
-  #editors, 
-  #origin-editor {
-    height: calc(100vh - 150px);
-  }
-  
-  .col-lg-6,
-  .col-lg-12 {
-    transition: all 0.3s ease-in-out;
-  }
+.paragraph-container.changed {
+  background: #fff3cd; /* Light yellow highlight for changes */
+  border-left: 4px solid #ffc107;
+  padding-left: 1rem;
+}
 
-  #fork-select {
-    transition: all 0.3s ease-in-out;
-  }
-  
-  .fork-selector-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 400px;
-    max-height: 80vh;
-    z-index: 1000;
-  }
+.change-btn {
+  margin-top: 0.5rem;
+}
 
-  .fork-selector-header {
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+/* Highlight on hover for branch paragraphs */
+#branchDocument .paragraph-container:hover {
+  background: #ffe8a1;
+}
 
-  .fork-selector-content {
-    padding: 1rem;
-    max-height: calc(80vh - 60px);
-    overflow-y: auto;
-  }
+/* Editor container styles */
+.CodeMirror {
+  height: calc(100vh - 250px) !important; /* Adjust for navbar and controls */
+}
 
-  .document-tree {
-    font-size: 0.9rem;
-  }
+.CodeMirror-scroll {
+  min-height: calc(100vh - 150px);
+}
 
-  .tree-children {
-    margin-left: 0.5rem;
-    padding-left: 0;
-    position: relative;
-  }
+/* Ensure editor containers take full height */
+#editors,
+#origin-editor {
+  height: calc(100vh - 150px);
+}
 
-  .tree-child {
-    position: relative;
-    padding-left: 1.5rem;
-  }
+.col-lg-6,
+.col-lg-12 {
+  transition: all 0.3s ease-in-out;
+}
 
-  .tree-prefix {
-    position: absolute;
-    left: 0;
-    font-family: monospace;
-    color: #6c757d;
-  }
+#fork-select {
+  transition: all 0.3s ease-in-out;
+}
 
-  /* Add vertical lines for non-last children */
-  .tree-child:not(:last-child)::before {
-    content: "";
-    position: absolute;
-    left: 0.5rem;
-    top: 1.2rem;
-    bottom: 0;
-    width: 1px;
-    background-color: #dee2e6;
-  }
+.fork-selector-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  max-height: 80vh;
+  z-index: 1000;
+}
 
-  .tree-item {
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-    border-radius: 4px;
-    margin: 0.25rem 0;
-  }
+.fork-selector-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  .tree-item:hover {
-    background: #f8f9fa;
-  }
+.fork-selector-content {
+  padding: 1rem;
+  max-height: calc(80vh - 60px);
+  overflow-y: auto;
+}
 
-  .tree-item.active {
-    background: #e9ecef;
-  }
+.document-tree {
+  font-size: 0.9rem;
+}
 
-  .tree-item-content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
+.tree-children {
+  margin-left: 0.5rem;
+  padding-left: 0;
+  position: relative;
+}
 
-  .tree-item-id {
-    color: #6c757d;
-    font-size: 0.8em;
-    margin-left: 0.5rem;
-  }
+.tree-child {
+  position: relative;
+  padding-left: 1.5rem;
+}
 
-  .editor-controls {
-    margin-bottom: 1rem;
-    display: flex;
-    gap: 0.5rem;
-  }
+.tree-prefix {
+  position: absolute;
+  left: 0;
+  font-family: monospace;
+  color: #6c757d;
+}
 
-  .debug-info {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 4px;
-    font-size: 0.8rem;
-  }
+/* Add vertical lines for non-last children */
+.tree-child:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 1.2rem;
+  bottom: 0;
+  width: 1px;
+  background-color: #dee2e6;
+}
 
-  .debug-info pre {
-    margin: 0.5rem 0 0 0;
-    white-space: pre-wrap;
-    word-break: break-all;
-  }
-  
+.tree-item {
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0.25rem 0;
+}
+
+.tree-item:hover {
+  background: #f8f9fa;
+}
+
+.tree-item.active {
+  background: #e9ecef;
+}
+
+.tree-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tree-item-id {
+  color: #6c757d;
+  font-size: 0.8em;
+  margin-left: 0.5rem;
+}
+
+.editor-controls {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.debug-info {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.debug-info pre {
+  margin: 0.5rem 0 0 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Diff2Html CSS adjustments (optional) */
+.d2h-wrapper {
+  font-size: 14px;
+}

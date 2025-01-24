@@ -210,10 +210,33 @@ document.addEventListener("DOMContentLoaded", () => {
     setColumnLayout(false);
 
     // Show the most recently created fork
-    const mostRecentForkId = forkIds[forkIds.length - 1];
-    currentForkDocId = mostRecentForkId;
-    forkTitle.style.display = "block";
-    initForkEditor(mostRecentForkId);
+    // const mostRecentForkId = forkIds[forkIds.length - 1];
+    // currentForkDocId = mostRecentForkId;
+    // forkTitle.style.display = "block";
+    // initForkEditor(mostRecentForkId);
+
+    //Rather than show most recently created fork, we show the most recently opened fork
+    let last_loaded = 0;
+    let loaded_doc = {};
+    let currentForkDocId;
+
+    //we loop through all fork ids
+    for (let forkId of getAllForkIds()) {
+      //access each document, check its last loaded timestamp
+      if (documents[forkId].last_loaded > last_loaded) {
+        //assign last loaded to the most recently loaded document
+        last_loaded = documents[forkId].last_loaded 
+        loaded_doc = documents[forkId]
+        currentForkDocId = forkId
+      }
+    }
+
+
+      //display fork editor
+      forkTitle.style.display = "block";
+      initForkEditor(currentForkDocId)
+      console.log(documents)
+
   }
 
   function getAllForkIds() {
@@ -231,6 +254,9 @@ document.addEventListener("DOMContentLoaded", () => {
       ? currentOriginDocId
       : documentId;
 
+    
+    
+
     const newForkId = generateUUID();
     documents[newForkId] = {
       id: newForkId,
@@ -245,6 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentForkDocId = newForkId;
     forkTitle.style.display = "block";
     initForkEditor(newForkId);
+    console.log(documents)
   }
 
   /**
@@ -278,11 +305,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const panel = createForkSelectorPanel(currentDocId, (selectedId) => {
         panel.remove();
+
+        //on load, overwrite date
+        documents[selectedId].last_loaded = Date.now();
+        saveToLocalStorage()
         
         // If user selected a new doc for "origin"
         if (editor === "origin") {
           // 1) Save the old doc’s content
           //    (Actually, it’s already saved on every keystroke, but we can be safe.)
+          // console.log(originEditor.value())
           documents[currentOriginDocId].content = originEditor.value();
 
           // 2) Switch the origin pointer & re‐init

@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       origin: { id: originId },
       [originId]: {
         id: originId,
-        title: "Origin Document",
+        title: "1",
         content: "Write in Markdown here...",
         parentId: null,
       },
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * -------------------------
    *   Origin Editor Setup
-   * -------------------------
+   * -------------------------o
    */
   function initOriginEditor(docId) {
     // If there's an existing editor, destroy it first
@@ -235,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
       //display fork editor
       forkTitle.style.display = "block";
       initForkEditor(currentForkDocId)
-      console.log(documents)
 
   }
 
@@ -255,12 +254,44 @@ document.addEventListener("DOMContentLoaded", () => {
       : documentId;
 
     
-    
 
     const newForkId = generateUUID();
+
+    //logic for determining title
+    const tree = buildDocumentTree()
+    let new_title = "";
+
+    //for document being forked, check parent's id
+    let parent_id = documents[actualDocId].id
+    let parent_title = documents[actualDocId].title
+    //if there is no parent, it is the origin.
+    if (parent_id == undefined) {
+      parent_title = "1"
+    }
+
+
+    //search through document tree untl matching document with parent id is found
+    let parent = findDocumentByParentId(tree, parent_id)
+
+        
+    //after checking parent's id, check for siblings
+    let siblings = parent.children.length
+
+    //if no siblings, append .1 to parent's title
+    if (siblings == 0) {
+      new_title = parent_title + ".1"
+    }
+    //if siblings, append x # of siblings instead of 1
+    else {
+      new_title = parent_title + `.${siblings + 1}`
+    }
+    //overwrite title
+    
+
+
     documents[newForkId] = {
       id: newForkId,
-      title: `Fork of ${documents[actualDocId].title || "Untitled"}`,
+      title: `${new_title}`,
       content: documents[actualDocId].content,
       parentId: actualDocId,
     };
@@ -271,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
     currentForkDocId = newForkId;
     forkTitle.style.display = "block";
     initForkEditor(newForkId);
-    console.log(documents)
   }
 
   /**
@@ -314,7 +344,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (editor === "origin") {
           // 1) Save the old doc’s content
           //    (Actually, it’s already saved on every keystroke, but we can be safe.)
-          // console.log(originEditor.value())
           documents[currentOriginDocId].content = originEditor.value();
 
           // 2) Switch the origin pointer & re‐init
@@ -571,4 +600,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return container;
   }
+
+      //search through document tree untl matching document with parent id is found
+      function findDocumentByParentId(tree, targetParentId) {
+        function search(node) {
+          if (node.children) {
+            for (const child of node.children) {
+              if (child.id === targetParentId) return child;
+              const found = search(child);
+              if (found) return found;
+            }
+          }
+          return null;
+        }
+        return search(tree);
+      }
+      
 });

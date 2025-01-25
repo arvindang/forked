@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       origin: { id: originId },
       [originId]: {
         id: originId,
-        title: "1",
+        title: "Draft 1",
         content: "Write in Markdown here...",
         parentId: null,
       },
@@ -135,6 +135,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const existingControls = originTextArea.parentElement.querySelector(".editor-controls");
     if (existingControls) existingControls.remove();
     originTextArea.parentElement.insertBefore(controls, originTextArea);
+
+    document.getElementById("origin-title").textContent = documents[docId].title
+
+
   }
 
   /**
@@ -151,6 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Clear out the forkContainer first
     forkContainer.innerHTML = "";
+
 
     // Make a fresh <textarea>
     const forkEditorContainer = document.createElement("div");
@@ -186,6 +191,8 @@ document.addEventListener("DOMContentLoaded", () => {
     forkEditor.codemirror.on("focus", () => {
       lastFocusedEditor = "fork";
     });
+    document.getElementById("fork-title").textContent = documents[docId].title
+
   }
 
   /**
@@ -232,6 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+
       //display fork editor
       forkTitle.style.display = "block";
       initForkEditor(currentForkDocId)
@@ -266,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let parent_title = documents[actualDocId].title
     //if there is no parent, it is the origin.
     if (parent_id == undefined) {
-      parent_title = "1"
+      parent_title = "Draft 1"
     }
 
 
